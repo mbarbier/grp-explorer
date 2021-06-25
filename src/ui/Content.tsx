@@ -1,9 +1,14 @@
 import { App } from "../App";
+import { FileArt } from "../data/FileArt";
 import { FileB800 } from "../data/FileB800";
 import { FileBase } from "../data/FileBase";
 import { FileCon } from "../data/FileCon";
+import { FileMap } from "../data/FileMap";
+import { FileMid } from "../data/FileMid";
+import { FileVoc } from "../data/FileVoc";
+import { GrpProcessor } from "../data/GrpProcessor";
 import { Component } from "./Component";
-import { renderB800 } from "./DataRenderer";
+import { renderArt, renderB800, renderMap, renderMid, renderVoc } from "./DataRenderer";
 
 export class Content extends Component<HTMLDivElement> {
 
@@ -28,7 +33,7 @@ export class Content extends Component<HTMLDivElement> {
         this.replaceElement(msg);
     }
 
-    display(file: FileBase) {
+    display(file: FileBase, processor: GrpProcessor) {
         let title = <div className="title">
             {file.name} [{file.size / 1000} kB]
         </div>
@@ -38,6 +43,20 @@ export class Content extends Component<HTMLDivElement> {
             view = <code style="white-space: pre">{file.data}</code>
         } else if (file instanceof FileB800) {
             view = renderB800(file);
+        } else if (file instanceof FileMid) {
+            view = renderMid(file);
+        } else if (file instanceof FileVoc) {
+            view = renderVoc(file);
+        } else if (file instanceof FileMap) {
+            view = renderMap(file);
+        } else if (file instanceof FileArt) {
+            view = <div>
+                {
+                    file.tiles.map((t, i) => {
+                        return renderArt(t, processor);
+                    })
+                }
+            </div>
         }
         else {
             view = <div>todo</div>

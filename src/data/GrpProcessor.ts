@@ -4,11 +4,14 @@ import { FileCon } from "./FileCon";
 import { FileB800 } from "./FileB800";
 import { FileDat } from "./FileDat";
 import { FileArt } from "./FileArt";
+import { FileVoc } from "./FileVoc";
+import { FileMid } from "./FileMid";
+import { FileMap } from "./FileMap";
 
 export class GrpProcessor {
 
     files: Array<FileBase> = [];
-
+    palette: FileDat;
 
 
     read(buffer: ArrayBuffer) {
@@ -45,8 +48,20 @@ export class GrpProcessor {
             } else if (ext == "dat") {
                 file = new FileDat(reader, filename, filesize, offset);
                 this.files.push(file);
+                if (filename == "palette.dat") {
+                    this.palette = file as FileDat;
+                }
             } else if (ext == "art") {
                 file = new FileArt(reader, filename, filesize, offset);
+                this.files.push(file);
+            } else if (ext == "voc") {
+                file = new FileVoc(reader, filename, filesize, offset);
+                this.files.push(file);
+            } else if (ext == "mid") {
+                file = new FileMid(reader, filename, filesize, offset);
+                this.files.push(file);
+            } else if (ext == "map") {
+                file = new FileMap(reader, filename, filesize, offset);
                 this.files.push(file);
             } else {
                 file = new FileBase(reader, filename, filesize, offset);
@@ -73,6 +88,12 @@ export class GrpProcessor {
             } else if (extension == "dat" && f instanceof FileDat) {
                 found.push(f);
             } else if (extension == "art" && f instanceof FileArt) {
+                found.push(f);
+            } else if (extension == "voc" && f instanceof FileVoc) {
+                found.push(f);
+            } else if (extension == "mid" && f instanceof FileMid) {
+                found.push(f);
+            } else if (extension == "map" && f instanceof FileMap) {
                 found.push(f);
             }
         });

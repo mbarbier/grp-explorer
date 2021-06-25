@@ -1,13 +1,19 @@
 import { FileB800 } from "../data/FileB800";
+import { FileMid } from "../data/FileMid";
+import { FileVoc } from "../data/FileVoc";
+import { GrpProcessor } from "../data/GrpProcessor";
 
+import WebAudioTinySynth from "webaudio-tinysynth";
+import { FileMap } from "../data/FileMap";
+
+////////////////////////////
+// B800
 
 export function renderB800(file: FileB800) {
 
     if (file.chars.length != 2000) {
         return <div>File is not 2000 char long</div>
     }
-
-    // {items.forEach(e => { return e; })}
 
     let lines: Array<HTMLElement> = [];
     for (let r = 0; r < 25; r++) {
@@ -43,4 +49,89 @@ function getB800Element(char: string, colorData: number) {
     if (color < 16) c = b800color[color];
     if (bgcolor < 16) bc = b800color[bgcolor];
     return <span style={"color:" + c + ";background-color:" + bc}>{char}</span>
+}
+
+
+////////////////////////////
+// ART
+
+export function renderArt(tile: Tile, processor: GrpProcessor) {
+
+    let pixels = new Uint8ClampedArray(tile.pixels.length * 4);
+
+    let counter = 0;
+    for (let h = 0; h < tile.y; h++) {
+        for (let w = 0; w < tile.x; w++) {
+            let palindex = tile.pixels[h + w * tile.y];
+            let color = processor.palette.palette[palindex];
+            pixels[4 * counter + 0] = color.r;
+            pixels[4 * counter + 1] = color.g;
+            pixels[4 * counter + 2] = color.b;
+            pixels[4 * counter + 3] = color.a;
+            counter++;
+        }
+    }
+
+    let imageData = new ImageData(pixels, tile.x);
+    let canvas = document.createElement("canvas");
+    canvas.width = tile.x;
+    canvas.height = tile.y;
+    let ctx = canvas.getContext('2d');
+    ctx.putImageData(imageData, 0, 0);
+
+    return <div>{canvas}</div>
+}
+
+
+///////////////////////////////////////
+///// VOC
+
+export function renderVoc(voc: FileVoc) {
+    let e = <a>
+        Download
+    </a> as HTMLLinkElement;
+
+    let blob = new Blob([voc.data], { type: "audio/voc" });
+    e.href = window.URL.createObjectURL(blob);
+    (e as any).download = voc.name;
+
+    return e;
+}
+
+export function renderMid(voc: FileMid) {
+    let synth: any;
+    let playing = false;
+
+    function play() {
+        if (!playing) {
+            // let blob = new Blob([voc.data], { type: "audio/voc" });
+            synth = new WebAudioTinySynth();
+            // synth.src = window.URL.createObjectURL(blob);
+            synth.loadMIDI(voc.data);
+            synth.playMIDI();
+            playing = true;
+        } else {
+            synth.stopMIDI();
+            playing = false;
+        }
+
+    }
+
+    let e = <div onclick={() => {
+        play();
+    }}>
+        Play/Pause
+    </div>;
+
+
+    return e;
+}
+
+
+
+/////////////////////////////////////////
+//
+
+export function renderMap(map: FileMap) {
+    return <div>map</div>
 }

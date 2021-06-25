@@ -20,7 +20,10 @@ export class SideBar extends Component<HTMLDivElement> {
             {this.getSection(processor, "art")}
             {this.getSection(processor, "bin")}
             {this.getSection(processor, "con")}
+            {this.getSection(processor, "map")}
             {this.getSection(processor, "dat")}
+            {this.getSection(processor, "mid")}
+            {this.getSection(processor, "voc")}
         </div>
 
         let sections = e.getElementsByClassName("section");
@@ -38,7 +41,7 @@ export class SideBar extends Component<HTMLDivElement> {
             <div className="sectionHeader">{ext} ({files.length})</div>
             <div className="open">
                 {files.map((f, i) => {
-                    return <div className="file" onclick={() => this.onFileSelected(f)}>
+                    return <div className="file" onclick={() => this.onFileSelected(f, processor)}>
                         {f.name}
                     </div>
                 })}
@@ -60,7 +63,7 @@ export class SideBar extends Component<HTMLDivElement> {
         });
     }
 
-    private onFileSelected(file: FileBase) {
-        this.app.content.display(file);
+    private onFileSelected(file: FileBase, processor: GrpProcessor) {
+        this.app.content.display(file, processor);
     }
 }

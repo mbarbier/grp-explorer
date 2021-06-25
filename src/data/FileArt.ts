@@ -36,5 +36,12 @@ export class FileArt extends FileBase {
                 }
             }
         }
+
+        for (let i = this.tiles.length - 1; i >= 0; i--) {
+            let size = this.tiles[i].x * this.tiles[i].y;
+            if (size == 0) {
+                this.tiles.splice(i, 1);
+            }
+        }
     }
 }

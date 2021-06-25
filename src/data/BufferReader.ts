@@ -36,4 +36,10 @@ export class BufferReader {
         this.offset += 1;
         return n;
     }
+
+    readBytes(length: number) {
+        let subbuffer = this.buffer.slice(this.offset, this.offset + length);
+        this.offset += length;
+        return subbuffer;
+    }
 }
