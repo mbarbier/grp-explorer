@@ -39,7 +39,7 @@ export class SideBar extends Component<HTMLDivElement> {
 
         return <div className="section">
             <div className="sectionHeader">{ext} ({files.length})</div>
-            <div className="open">
+            <div className="close">
                 {files.map((f, i) => {
                     return <div className="file" onclick={() => this.onFileSelected(f, processor)}>
                         {f.name}

@@ -31,6 +31,22 @@ export class BufferReader {
         return n;
     }
 
+    readInt32LE() {
+        let n = this.view.getInt32(this.offset, true);
+        this.offset += 4;
+        return n;
+    }
+    readInt16LE() {
+        let n = this.view.getInt16(this.offset, true);
+        this.offset += 2;
+        return n;
+    }
+
+    readInt8() {
+        let n = this.view.getInt8(this.offset);
+        this.offset += 1;
+        return n;
+    }
     readUint8() {
         let n = this.view.getUint8(this.offset);
         this.offset += 1;

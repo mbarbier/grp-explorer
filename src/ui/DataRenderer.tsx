@@ -83,19 +83,22 @@ export function renderArt(tile: Tile, processor: GrpProcessor) {
 }
 
 
+function getDownloadButon(data: ArrayBuffer, type: string, name: string) {
+    let e = <a>
+        Download
+    </a> as HTMLLinkElement;
+    let blob = new Blob([data], { type: type });
+    e.href = window.URL.createObjectURL(blob);
+    (e as any).download = name;
+    return e;
+}
+
 ///////////////////////////////////////
 ///// VOC
 
 export function renderVoc(voc: FileVoc) {
-    let e = <a>
-        Download
-    </a> as HTMLLinkElement;
-
-    let blob = new Blob([voc.data], { type: "audio/voc" });
-    e.href = window.URL.createObjectURL(blob);
-    (e as any).download = voc.name;
-
-    return e;
+    let d = getDownloadButon(voc.data, "audio/voc", voc.name);
+    return d;
 }
 
 export function renderMid(voc: FileMid) {
@@ -117,11 +120,16 @@ export function renderMid(voc: FileMid) {
 
     }
 
-    let e = <div onclick={() => {
-        play();
-    }}>
-        Play/Pause
-    </div>;
+    let e = <div>
+        <div>
+            {getDownloadButon(voc.data, "audio/mid", voc.name)}
+        </div>
+        <div onclick={() => {
+            play();
+        }}>
+            Play/Pause
+        </div>;
+    </div>
 
 
     return e;
@@ -133,5 +141,12 @@ export function renderMid(voc: FileMid) {
 //
 
 export function renderMap(map: FileMap) {
-    return <div>map</div>
+    let dl = <div>
+        {getDownloadButon(map.rawData, "audio/map", map.name)}
+    </div>
+
+    return <div className="mapheader">
+        {dl}
+        <canvas></canvas>
+    </div>
 }
