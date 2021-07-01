@@ -9,5 +9,6 @@ type Color = {
 type Tile = {
     x: number,
     y: number,
+    valid?: boolean,
     pixels?: Array<number>
 }

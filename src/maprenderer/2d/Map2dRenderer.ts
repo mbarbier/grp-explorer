@@ -1,6 +1,14 @@
 import { Map } from "../../data/FileMap";
 
-import { Box2, Vector2 } from "three";
+export class Point2 {
+    constructor(public x = 0, public y = 0, public z = 0) { }
+
+    set(x: number, y: number, z?: number) {
+        this.x = x;
+        this.y = y;
+        if (z != null) this.z = z;
+    }
+}
 
 
 export class Map2dRenderer {
@@ -9,11 +17,12 @@ export class Map2dRenderer {
     private map: Map;
     private context: CanvasRenderingContext2D;
 
-    private bounds: Box2;
+    private boundsMin: Point2;
+    private boundsMax: Point2;
 
     private lineWidth = 1;
     private scale = 1;
-    private position = new Vector2();
+    private position = new Point2();
 
     initialize(canvas: HTMLCanvasElement, map: Map) {
         this.canvas = canvas;
@@ -23,18 +32,18 @@ export class Map2dRenderer {
         this.context = canvas.getContext("2d");
 
 
-        let point = new Vector2();
-        this.bounds = new Box2();
+        this.boundsMin = new Point2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+        this.boundsMax = new Point2(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
         this.map.walls.forEach(w => {
-            point.set(w.x, w.y);
-            this.bounds.expandByPoint(point);
+            this.boundsMin.x = Math.min(this.boundsMin.x, w.x);
+            this.boundsMin.y = Math.min(this.boundsMin.y, w.y);
+            this.boundsMax.x = Math.max(this.boundsMax.x, w.x);
+            this.boundsMax.y = Math.max(this.boundsMax.y, w.y);
         });
 
-        let size = this.bounds.getSize(new Vector2());
-        this.scale = 1000 / size.width;
+        let size = this.boundsMax.x - this.boundsMin.x;
+        this.scale = 1000 / size;
         this.position.set(this.map.startX, this.map.startY);
-
-        (window as any)._mapr = this;
 
         this.canvas.addEventListener("mousedown", (ev: MouseEvent) => this.onMouseDown(ev));
         this.canvas.addEventListener("mouseup", (ev: MouseEvent) => this.onMouseUp(ev));
@@ -89,8 +98,8 @@ export class Map2dRenderer {
     }
 
     private isDown = false;
-    private mouseDownPosition = new Vector2();
-    private worldDownPosition = new Vector2();
+    private mouseDownPosition = new Point2();
+    private worldDownPosition = new Point2();
 
     private onMouseWheel(e: WheelEvent) {
         if (e.deltaY < 0) this.scale *= 1.2;
@@ -99,7 +108,7 @@ export class Map2dRenderer {
     private onMouseDown(e: MouseEvent) {
         this.isDown = true;
         this.mouseDownPosition.set(e.x, e.y);
-        this.worldDownPosition.copy(this.position);
+        this.worldDownPosition.set(this.position.x, this.position.y);
     }
     private onMouseUp(e: MouseEvent) {
         this.isDown = false;
@@ -110,7 +119,7 @@ export class Map2dRenderer {
         let movex = e.x - this.mouseDownPosition.x;
         let movey = e.y - this.mouseDownPosition.y;
 
-        this.position.copy(this.worldDownPosition);
+        this.position.set(this.worldDownPosition.x, this.worldDownPosition.y);
         this.position.x -= movex / this.scale;
         this.position.y -= movey / this.scale;
     }

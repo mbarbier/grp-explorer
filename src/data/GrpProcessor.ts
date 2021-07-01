@@ -7,6 +7,7 @@ import { FileArt } from "./FileArt";
 import { FileVoc } from "./FileVoc";
 import { FileMid } from "./FileMid";
 import { FileMap } from "./FileMap";
+import { Texture } from "../maprenderer/Texture";
 
 export class GrpProcessor {
 
@@ -76,6 +77,24 @@ export class GrpProcessor {
             let file = this.files[f];
             file.read();
         }
+
+        let idx = 0;
+        let arts = this.getFiles("art");
+        for (let i = 0; i < arts.length; i++) {
+            let tiles = (arts[i] as FileArt).tiles;
+            for (let j = 0; j < tiles.length; j++) {
+                let t = tiles[j];
+                this.allTexture.push(new Texture(t, this.palette, idx));
+                idx++;
+            }
+        }
+    }
+
+    addMap(buffer: ArrayBuffer, name: string) {
+        let reader = new BufferReader(buffer);
+        let file = new FileMap(reader, name, buffer.byteLength, 0);
+        file.read();
+        this.files.push(file);
     }
 
     getFiles(extension: string): Array<FileBase> {
@@ -100,4 +119,14 @@ export class GrpProcessor {
         return found;
     }
 
+
+    private allTexture: Array<Texture> = [];
+
+    getTexture(id: number) {
+        if (id >= this.allTexture.length) {
+            console.error("texture not found #" + id);
+            return null;
+        }
+        return this.allTexture[id];
+    }
 }

@@ -1,3 +1,4 @@
+import { GLOBALSCALE } from "../Constants";
 import { BufferReader } from "./BufferReader";
 import { FileBase } from "./FileBase";
 
@@ -6,6 +7,7 @@ export class FileMap extends FileBase {
     rawData: ArrayBuffer;
 
     map: Map;
+    globalScale = GLOBALSCALE;
 
     read() {
         this.reader.offset = this.initialOffset;
@@ -21,9 +23,9 @@ export class FileMap extends FileBase {
         }
 
         this.map = new Map();
-        this.map.startX = r.readInt32LE();
-        this.map.startY = r.readInt32LE();
-        this.map.startZ = r.readInt32LE();
+        this.map.startX = r.readInt32LE() * this.globalScale;
+        this.map.startY = r.readInt32LE() * this.globalScale;
+        this.map.startZ = -(r.readInt32LE() >> 4) * this.globalScale;
         this.map.startAngle = r.readInt16LE();
         this.map.currentSector = r.readInt16LE();
 
@@ -34,8 +36,8 @@ export class FileMap extends FileBase {
 
             sector.wallptr = r.readInt16LE();
             sector.wallnum = r.readInt16LE();
-            sector.ceilingz = r.readInt32LE();
-            sector.floorz = r.readInt32LE();
+            sector.ceilingz = -(r.readInt32LE() >> 4) * this.globalScale; //Note: Z coordinates are all shifted up 4
+            sector.floorz = -(r.readInt32LE() >> 4) * this.globalScale; //Note: Z coordinates are all shifted up 4
             sector.ceilingstat = r.readInt16LE();
             sector.floorstat = r.readInt16LE();
             sector.ceilingpicnum = r.readInt16LE();
@@ -62,8 +64,8 @@ export class FileMap extends FileBase {
             let wall = new Wall();
             this.map.walls.push(wall);
 
-            wall.x = r.readInt32LE();
-            wall.y = r.readInt32LE();
+            wall.x = r.readInt32LE() * this.globalScale;
+            wall.y = r.readInt32LE() * this.globalScale;
             wall.point2 = r.readInt16LE();
             wall.nextwall = r.readInt16LE();
             wall.nextsector = r.readInt16LE();

@@ -18,7 +18,7 @@ export class FileArt extends FileBase {
 
         let count = localtileend - localtilestart + 1;
 
-        for (let i = 0; i < count; i++) this.tiles.push({ x: 0, y: 0, pixels: [] });
+        for (let i = 0; i < count; i++) this.tiles.push({ x: 0, y: 0, pixels: [], valid: false });
         for (let i = 0; i < count; i++) this.tiles[i].x = this.reader.readUint16LE();
         for (let i = 0; i < count; i++) this.tiles[i].y = this.reader.readUint16LE();
         for (let i = 0; i < count; i++) {
@@ -34,13 +34,7 @@ export class FileArt extends FileBase {
                 for (let c = 0; c < pixels; c++) {
                     tile.pixels.push(this.reader.readUint8());
                 }
-            }
-        }
-
-        for (let i = this.tiles.length - 1; i >= 0; i--) {
-            let size = this.tiles[i].x * this.tiles[i].y;
-            if (size == 0) {
-                this.tiles.splice(i, 1);
+                tile.valid = true;
             }
         }
     }

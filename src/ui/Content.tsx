@@ -90,7 +90,7 @@ export class Content extends Component<HTMLDivElement> {
         this.replaceElement(e);
 
         if (this.mapRenderer != null) {
-            this.mapRenderer.initialize(e, (file as FileMap).map);
+            this.mapRenderer.initialize(e, (file as FileMap).map, processor);
         }
     }
 

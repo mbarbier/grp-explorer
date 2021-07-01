@@ -57,6 +57,10 @@ function getB800Element(char: string, colorData: number) {
 
 export function renderArt(tile: Tile, processor: GrpProcessor) {
 
+    if(!tile.valid) {
+        return <div></div>
+    }
+
     let pixels = new Uint8ClampedArray(tile.pixels.length * 4);
 
     let counter = 0;
