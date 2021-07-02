@@ -30,10 +30,11 @@ export class Texture {
             this.texture.wrapT = RepeatWrapping;
         }
 
+        let max = Math.max(this.tile.x, this.tile.y);
         let tex = this.texture.clone();
         let repeatx = xrepeat;
         let repeaty = yrepeat;
-        tex.repeat.set(repeatx/8, repeaty/8);
+        tex.repeat.set(8 * repeatx / max, 8 * repeaty / max);
         tex.needsUpdate = true;
 
         return tex;

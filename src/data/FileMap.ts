@@ -1,4 +1,5 @@
 import { GLOBALSCALE } from "../Constants";
+import { Point2 } from "../maprenderer/2d/Map2dRenderer";
 import { BufferReader } from "./BufferReader";
 import { FileBase } from "./FileBase";
 
@@ -29,11 +30,13 @@ export class FileMap extends FileBase {
         this.map.startAngle = r.readInt16LE();
         this.map.currentSector = r.readInt16LE();
 
+
         let sectorCount = r.readUint16LE();
         for (let i = 0; i < sectorCount; i++) {
             let sector = new Sector();
             this.map.sectors.push(sector);
 
+            sector.index = i;
             sector.wallptr = r.readInt16LE();
             sector.wallnum = r.readInt16LE();
             sector.ceilingz = -(r.readInt32LE() >> 4) * this.globalScale; //Note: Z coordinates are all shifted up 4
@@ -41,13 +44,13 @@ export class FileMap extends FileBase {
             sector.ceilingstat = r.readInt16LE();
             sector.floorstat = r.readInt16LE();
             sector.ceilingpicnum = r.readInt16LE();
-            sector.ceilingheinum = r.readInt16LE();
+            sector.ceilingheinum = -r.readInt16LE();
             sector.ceilingshade = r.readInt8();
             sector.ceilingpal = r.readUint8();
             sector.ceilingxpanning = r.readUint8();
             sector.ceilingypanning = r.readUint8();
             sector.floorpicnum = r.readInt16LE();
-            sector.floorheinum = r.readInt16LE();
+            sector.floorheinum = -r.readInt16LE();
             sector.floorshade = r.readInt8();
             sector.floorpal = r.readUint8();
             sector.floorxpanning = r.readUint8();
@@ -57,6 +60,11 @@ export class FileMap extends FileBase {
             sector.lotag = r.readInt16LE();
             sector.hitag = r.readInt16LE();
             sector.extra = r.readInt16LE();
+
+            sector.fstat = new Secstat();
+            sector.cstat = new Secstat();
+            readType(sector.cstat, sector.ceilingstat);
+            readType(sector.fstat, sector.floorstat);
         }
 
         let wallCount = r.readUint16LE();
@@ -81,6 +89,10 @@ export class FileMap extends FileBase {
             wall.lotag = r.readInt16LE();
             wall.hitag = r.readInt16LE();
             wall.extra = r.readInt16LE();
+
+            wall.index = i;
+            wall.stat = new Wstat();
+            readType(wall.stat, wall.cstat);
         }
 
         let spriteCount = r.readUint16LE();
@@ -112,9 +124,51 @@ export class FileMap extends FileBase {
             sprite.hitag = r.readInt16LE();
             sprite.extra = r.readInt16LE();
         }
+
+
+        for (let j = 0; j < this.map.sectors.length; j++) {
+            let sector = this.map.sectors[j];
+
+            sector.z.push(sector.ceilingz);
+            sector.z.push(sector.floorz);
+
+            let wall0 = this.map.walls[sector.wallptr];
+            let wall1 = this.map.walls[wall0.point2];
+
+            for (let f = 0; f < 2; f++) {
+                let slopped = (f == 0 ? sector.cstat.sloped : sector.fstat.sloped);
+                let angle = (f == 0 ? sector.ceilingheinum : sector.floorheinum)
+                if (slopped) {
+                    angle /= 4096;
+                    let fx = wall1.y - wall0.y;
+                    let fy = wall0.x - wall1.x;
+                    let f = fx * fx + fy * fy;
+                    if (f > 0) {
+                        f = 1 / Math.sqrt(f);
+                        fx *= f;
+                        fy *= f;
+                        sector.grad.push(new Point2(fx * angle, fy * angle));
+                    } else {
+                        sector.grad.push(new Point2(0, 0));
+                        break;
+                    }
+                } else {
+                    sector.grad.push(new Point2(0, 0));
+                }
+            }
+        }
     }
 }
 
+function readType(t: Wstat | Secstat, value: number) {
+    let keys = Object.keys(t);
+    for (let i = 0; i < keys.length; i++) {
+        let v = (value >> i);
+        v = v & 1;
+        let key = keys[i];
+        (t as any)[key] = (v == 0 ? false : true);
+    }
+}
 
 export class Map {
 
@@ -155,6 +209,26 @@ export class Sector {
     lotag: number;
     hitag: number;
     extra: number;
+
+    cstat: Secstat;
+    fstat: Secstat;
+    index: number;
+
+    walls: Array<Wall> = [];
+
+    // o ceiling, 1 floor
+    z: Array<number> = [];
+    grad: Array<Point2> = [];
+}
+
+export class Secstat {
+    paralaxing: boolean = false;
+    sloped: boolean = false;
+    swapxy: boolean = false;
+    dblsmooshiness: boolean = false;
+    xflip: boolean = false;
+    yflip: boolean = false;
+    alignTexToFirstWall: boolean = false;
 }
 
 export class Wall {
@@ -175,6 +249,22 @@ export class Wall {
     lotag: number;
     hitag: number;
     extra: number;
+
+    index: number;
+    stat: Wstat;
+}
+
+export class Wstat {
+    blocking: boolean = false;
+    bottomsOfInvisibleSwapped: boolean = false;
+    alignPictureOnBottom: boolean = false;
+    xflip: boolean = false;
+    masking: boolean = false;
+    oneWay: boolean = false;
+    blockingWall2: boolean = false;
+    transluscence: boolean = false;
+    yflip: boolean = false;
+    transluscenceReversing: boolean = false;
 }
 
 export class Sprite {

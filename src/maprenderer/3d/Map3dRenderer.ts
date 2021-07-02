@@ -1,5 +1,5 @@
 
-import { PerspectiveCamera, Scene, Color, Fog, WebGLRenderer, HemisphereLight, DirectionalLight, Material, MeshLambertMaterial, BufferGeometry, Float32BufferAttribute, Mesh, DoubleSide, Vector3, BoxBufferGeometry, AmbientLight, MeshBasicMaterial, BufferAttribute, Shape, ShapeBufferGeometry, Object3D, TextureLoader, RepeatWrapping, LineSegments, LineBasicMaterial, AxesHelper } from 'three';
+import { PerspectiveCamera, Scene, Color, Fog, WebGLRenderer, HemisphereLight, DirectionalLight, Material, MeshLambertMaterial, BufferGeometry, Float32BufferAttribute, Mesh, DoubleSide, Vector3, BoxBufferGeometry, AmbientLight, MeshBasicMaterial, BufferAttribute, Shape, ShapeBufferGeometry, Object3D, TextureLoader, RepeatWrapping, LineSegments, LineBasicMaterial, AxesHelper, Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLOBALSCALE } from '../../Constants';
 
@@ -12,6 +12,11 @@ let c = new Vector3();
 let d = new Vector3();
 let planey = new Vector3();
 let planex = new Vector3();
+let v0 = new Vector2();
+let v1 = new Vector2();
+let v2 = new Vector2();
+let v3 = new Vector2();
+
 
 export class Map3dRenderer {
 
@@ -93,29 +98,22 @@ export class Map3dRenderer {
 
     private renderWalls() {
 
-        let rendererWall = new Array<boolean>(this.map.walls.length);
-        for (let i = 0; i < this.map.walls.length; i++) rendererWall[i] = false;
-
         let sectorstart = 0;
 
         for (let j = sectorstart; j < this.map.sectors.length; j++) {
 
             let sector = this.map.sectors[j];
-            let wallptr = sector.wallptr;
-            for (let i = 0; i < sector.wallnum; i++) {
-                let alreadyDone = rendererWall[wallptr];
-                if (alreadyDone) continue;
 
-                rendererWall[wallptr] = true;
-                let wall = this.map.walls[wallptr];
-                wallptr = wall.point2;
-                let next = this.map.walls[wallptr];
+            for (let i = 0; i < sector.wallnum; i++) {
+                let wall = this.map.walls[sector.wallptr + i];
+                let next = this.map.walls[wall.point2];
                 this.renderWall(sector, wall, next);
             }
 
-            this.renderFloorAndCeiling(sector);
+            if (sector.floorz != sector.ceilingz) {
+                this.renderFloorAndCeiling(sector);
+            }
         }
-
 
         if (!this.useTexture) {
             // wireframe
@@ -142,7 +140,7 @@ export class Map3dRenderer {
         if (!this.useTexture) return this.defaultCeilMaterial;
 
         let texture = this.processor.getTexture(sector.ceilingpicnum);
-        let tex = texture.getTexture(1, 1);
+        let tex = texture.getTexture(16, 16);
         let material = new MeshBasicMaterial({ map: tex, transparent: true });
         return material;
     }
@@ -150,7 +148,7 @@ export class Map3dRenderer {
         if (!this.useTexture) return this.defaultFloorMaterial;
 
         let texture = this.processor.getTexture(sector.floorpicnum);
-        let tex = texture.getTexture(1, 1);
+        let tex = texture.getTexture(16, 16);
         let material = new MeshBasicMaterial({ map: tex, transparent: true });
         return material;
     }
@@ -158,18 +156,37 @@ export class Map3dRenderer {
     private renderWall(sector: Sector, wall: Wall, next: Wall) {
         let nextSector = wall.nextsector != -1 ? this.map.sectors[wall.nextsector] : null;
 
+        if (sector.floorz == sector.ceilingz) return;
+
         if (nextSector == null) {
-            let geometry = this.newWallPlane(wall.x, sector.floorz, wall.y, next.x, sector.ceilingz, next.y);
+
+            a.set(wall.x, this.getSlopeZ(sector, 1, wall.x, wall.y), wall.y);
+            b.set(wall.x, this.getSlopeZ(sector, 0, wall.x, wall.y), wall.y);
+            c.set(next.x, this.getSlopeZ(sector, 0, next.x, next.y), next.y);
+            d.set(next.x, this.getSlopeZ(sector, 1, next.x, next.y), next.y);
+
+            let geometry = this.newQuad(a, b, c, d);
             let mesh = new Mesh(geometry, this.getWallMaterial(wall));
             this.root.add(mesh);
+
         } else {
-            if (sector.floorz > nextSector.floorz) {
-                let geometry = this.newWallPlane(wall.x, sector.floorz, wall.y, next.x, nextSector.floorz, next.y);
+            if (sector.floorz < nextSector.floorz) {
+                a.set(wall.x, this.getSlopeZ(sector, 1, wall.x, wall.y), wall.y);
+                b.set(wall.x, this.getSlopeZ(nextSector, 1, wall.x, wall.y), wall.y);
+                c.set(next.x, this.getSlopeZ(nextSector, 1, next.x, next.y), next.y);
+                d.set(next.x, this.getSlopeZ(sector, 1, next.x, next.y), next.y);
+
+                let geometry = this.newQuad(a, b, c, d);
                 let mesh = new Mesh(geometry, this.getWallMaterial(wall));
                 this.root.add(mesh);
             }
-            if (sector.ceilingz < nextSector.ceilingz) {
-                let geometry = this.newWallPlane(wall.x, nextSector.ceilingz, wall.y, next.x, sector.ceilingz, next.y);
+            if (sector.ceilingz > nextSector.ceilingz) {
+                a.set(wall.x, this.getSlopeZ(nextSector, 0, wall.x, wall.y), wall.y);
+                b.set(wall.x, this.getSlopeZ(sector, 0, wall.x, wall.y), wall.y);
+                c.set(next.x, this.getSlopeZ(sector, 0, next.x, next.y), next.y);
+                d.set(next.x, this.getSlopeZ(nextSector, 0, next.x, next.y), next.y);
+
+                let geometry = this.newQuad(a, b, c, d);
                 let mesh = new Mesh(geometry, this.getWallMaterial(wall));
                 this.root.add(mesh);
             }
@@ -204,61 +221,83 @@ export class Map3dRenderer {
         }
 
         let ceilGeometry = new ShapeBufferGeometry(shape);
-        let positions = ceilGeometry.getAttribute("position");
-        for (let i = 0; i < positions.count; i++) {
-            let y = positions.getY(i);
-            positions.setZ(i, y);
-            positions.setY(i, 0);
+
+        // align uv to first wall
+        let uv = ceilGeometry.getAttribute("uv");
+        let p0 = v0.set(uv.getX(0), uv.getY(0));
+        let p1 = v1.set(uv.getX(1), uv.getY(1));
+        let angle = -v2.copy(p1).sub(p0).normalize().angle();
+        let sin = Math.sin(angle);
+        let cos = Math.cos(angle);
+        for (let i = 0; i < uv.count; i++) {
+            v3.set(uv.getX(i), uv.getY(i));
+            v3.sub(p0);
+            let newx = v3.x * cos - v3.y * sin;
+            let newy = v3.x * sin + v3.y * cos;
+            uv.setX(i, newx);
+            uv.setY(i, newy);
+        }
+
+        let floorGeometry = ceilGeometry.clone();
+
+        let cpositions = ceilGeometry.getAttribute("position");
+        for (let i = 0; i < cpositions.count; i++) {
+            let x = cpositions.getX(i);
+            let y = cpositions.getY(i);
+            let z = this.getSlopeZ(sector, 0, x, y)
+            cpositions.setY(i, z);
+            cpositions.setZ(i, y);
+        }
+
+        let fpositions = floorGeometry.getAttribute("position");
+        for (let i = 0; i < fpositions.count; i++) {
+            let x = fpositions.getX(i);
+            let y = fpositions.getY(i);
+            let z = this.getSlopeZ(sector, 1, x, y)
+            fpositions.setY(i, z);
+            fpositions.setZ(i, y);
+        }
+        let floorindex = floorGeometry.index;
+        for (let i = 0; i < floorindex.count; i = i + 3) {
+            let b = floorindex.getY(i);
+            let c = floorindex.getZ(i);
+            floorindex.setY(i, c);
+            floorindex.setZ(i, b);
         }
 
 
-        let floor = new Mesh(ceilGeometry, this.getFloorMaterial(sector));
-        floor.scale.y = -1;
-        floor.position.y = sector.floorz;
-
+        let floor = new Mesh(floorGeometry, this.getFloorMaterial(sector));
         let ceiling = new Mesh(ceilGeometry, this.getCeilingMaterial(sector));
-        ceiling.position.y = sector.ceilingz;
 
         this.root.add(floor);
         this.root.add(ceiling);
     }
 
-    private newWallPlane(x: number, y: number, z: number, x2: number, y2: number, z2: number) {
+
+    private newQuad(a: Vector3, b: Vector3, c: Vector3, d: Vector3) {
         const geometry = new BufferGeometry();
         const indices: Array<number> = [];
         const vertices: Array<number> = [];
         const uvs: Array<number> = [];
         const normals: Array<number> = [];
 
-        a.set(x, y, z);
-        b.set(x, y2, z);
-        c.set(x2, y2, z2);
-        d.set(x2, y, z2);
 
         let dir1 = planey.copy(b).sub(a);
         let dir2 = planex.copy(d).sub(a);
         let normal = new Vector3().crossVectors(dir1, dir2).normalize();
 
-        vertices.push(x, y, z);
-        vertices.push(x, y2, z);
-        vertices.push(x2, y2, z2);
-        vertices.push(x2, y, z2);
+        vertices.push(a.x, a.y, a.z);
+        vertices.push(b.x, b.y, b.z);
+        vertices.push(c.x, c.y, c.z);
+        vertices.push(d.x, d.y, d.z);
 
         let dir1l = dir1.length();
-        let dir2l = dir2.length();
+        let dir1l2 = planey.copy(d).sub(c).length();
 
-        // uvs.push(0, 0);
-        // uvs.push(0, 1);
-        // uvs.push(1, 1);
-        // uvs.push(1, 0);
-        uvs.push(0, y);
-        uvs.push(0, (y + dir1l));
-        uvs.push(1, (y + dir1l));
-        uvs.push(1, y);
-        // uvs.push(0, 0);
-        // uvs.push(0, dir1l);
-        // uvs.push(dir2l, dir1l);
-        // uvs.push(dir2l, 0);
+        uvs.push(0, a.y);
+        uvs.push(0, (a.y + dir1l));
+        uvs.push(1, (a.y + dir1l2));
+        uvs.push(1, a.y);
 
         normals.push(normal.x, normal.y, normal.z);
         normals.push(normal.x, normal.y, normal.z);
@@ -282,5 +321,11 @@ export class Map3dRenderer {
         }
 
         return geometry;
+    }
+
+    private getSlopeZ(sector: Sector, floor: number, x: number, y: number) {
+        let wall = this.map.walls[sector.wallptr];
+        let v = (wall.x - x) * sector.grad[floor].x + (wall.y - y) * sector.grad[floor].y + sector.z[floor];
+        return v;
     }
 }
