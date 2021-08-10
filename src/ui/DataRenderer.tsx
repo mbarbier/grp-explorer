@@ -57,7 +57,7 @@ function getB800Element(char: string, colorData: number) {
 
 export function renderArt(tile: Tile, processor: GrpProcessor) {
 
-    if(!tile.valid) {
+    if (!tile.valid) {
         return <div></div>
     }
 
@@ -87,7 +87,7 @@ export function renderArt(tile: Tile, processor: GrpProcessor) {
 }
 
 
-function getDownloadButon(data: ArrayBuffer, type: string, name: string) {
+export function getDownloadButon(data: ArrayBuffer, type: string, name: string) {
     let e = <a>
         Download
     </a> as HTMLLinkElement;
@@ -143,14 +143,3 @@ export function renderMid(voc: FileMid) {
 
 /////////////////////////////////////////
 //
-
-export function renderMap(map: FileMap) {
-    let dl = <div>
-        {getDownloadButon(map.rawData, "audio/map", map.name)}
-    </div>
-
-    return <div className="mapheader">
-        {dl}
-        <canvas></canvas>
-    </div>
-}

@@ -35,9 +35,8 @@ export class App {
             this.onGrpLoaded(arraybuffer);
 
             // debug map
-            this.loadExtraMap("assets/level1.map");
-            this.loadExtraMap("assets/newboard.map");
-            this.loadExtraMap("assets/newboard0.map");
+            // this.loadExtraMap("assets/level1.map");
+            // this.loadExtraMap("assets/newboard0.map");
         }
         req.send();
     }

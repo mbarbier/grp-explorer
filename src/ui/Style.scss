@@ -104,14 +104,11 @@ body {
     &.map {
         position: relative;
         
-        .title {
+        .mapheader {
             position: absolute;
             z-index: 10;
-        }
-        a {
-            position: absolute;
-            z-index: 10;
-            left: 200px;
+            background-color: rgba($color: (#ffffff), $alpha: 0.8);
+            display: flex;
         }
 
         canvas {

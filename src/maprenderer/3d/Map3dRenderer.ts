@@ -1,5 +1,5 @@
 
-import { PerspectiveCamera, Scene, Color, Fog, WebGLRenderer, HemisphereLight, DirectionalLight, Material, MeshLambertMaterial, BufferGeometry, Float32BufferAttribute, Mesh, DoubleSide, Vector3, BoxBufferGeometry, AmbientLight, MeshBasicMaterial, BufferAttribute, Shape, ShapeBufferGeometry, Object3D, TextureLoader, RepeatWrapping, LineSegments, LineBasicMaterial, AxesHelper, Vector2 } from 'three';
+import { PerspectiveCamera, Scene, Color, Fog, WebGLRenderer, HemisphereLight, DirectionalLight, Material, MeshLambertMaterial, BufferGeometry, Float32BufferAttribute, Mesh, DoubleSide, Vector3, BoxBufferGeometry, AmbientLight, MeshBasicMaterial, BufferAttribute, Shape, ShapeBufferGeometry, Object3D, TextureLoader, RepeatWrapping, LineSegments, LineBasicMaterial, AxesHelper, Vector2, MathUtils } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLOBALSCALE } from '../../Constants';
 
@@ -20,10 +20,6 @@ let v3 = new Vector2();
 
 export class Map3dRenderer {
 
-    private canvas: HTMLCanvasElement;
-    private map: Map;
-    private processor: GrpProcessor;
-
     private camera: PerspectiveCamera;
     private scene: Scene;
     private renderer: WebGLRenderer;
@@ -36,55 +32,95 @@ export class Map3dRenderer {
     private root = new Object3D();
 
     private lines: Array<Vector3> = [];
+    private initialized = false;
 
-    initialize(canvas: HTMLCanvasElement, map: Map, processor: GrpProcessor, useTexture = false) {
-        this.canvas = canvas;
-        this.map = map;
-        this.processor = processor;
+    private keydowns = {
+        "left": false,
+        "right": false,
+        "up": false,
+        "down": false,
+    }
+
+    constructor(private canvas: HTMLCanvasElement, private map: Map, private processor: GrpProcessor) {
+    }
+
+    initialize(useTexture = false) {
+
         this.useTexture = useTexture;
 
-        (window as any)._mapr = this;
+        if (!this.initialized) {
+            this.initialized = true;
 
+            this.camera = new PerspectiveCamera(45, this.canvas.width / this.canvas.height, 1, 100000);
+            this.camera.position.set(100, 200, 300);
 
-        this.camera = new PerspectiveCamera(45, canvas.width / canvas.height, 1, 100000);
-        this.camera.position.set(100, 200, 300);
+            this.scene = new Scene();
+            this.scene.background = new Color(0x151515);
+            this.scene.add(this.root);
 
-        this.scene = new Scene();
-        this.scene.background = new Color(0x151515);
-        this.scene.add(this.root);
+            this.root.updateMatrixWorld();
 
-        // this.root.scale.multiplyScalar(0.1);
-        this.root.updateMatrixWorld();
+            // renderer
+            this.renderer = new WebGLRenderer({ antialias: true, canvas: this.canvas });
+            this.renderer.setPixelRatio(window.devicePixelRatio);
+            this.renderer.setSize(this.canvas.width, this.canvas.height);
 
-        // renderer
-        this.renderer = new WebGLRenderer({ antialias: true, canvas: canvas });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(canvas.width, canvas.height);
+            // controls
+            this.orbitControls = new OrbitControls(this.camera, this.canvas);
 
-        // controls
-        this.orbitControls = new OrbitControls(this.camera, this.canvas);
+            // lights
+            const hemiLight = new AmbientLight(0xffffff, 0.7);
+            this.scene.add(hemiLight);
 
-        // lights
-        const hemiLight = new AmbientLight(0xffffff, 0.7);
-        this.root.add(hemiLight);
+            const dirLight = new DirectionalLight(0xffffff, 1);
+            dirLight.position.set(0.1, 1, 0.2);
+            this.scene.add(dirLight);
 
-        const dirLight = new DirectionalLight(0xffffff, 1);
-        dirLight.position.set(0.1, 1, 0.2);
-        this.root.add(dirLight);
+            let opacity = 0.8;
+            this.defaultWallMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
+            this.defaultFloorMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
+            this.defaultCeilMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
 
-        let opacity = 0.8;
-        this.defaultWallMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
-        this.defaultFloorMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
-        this.defaultCeilMaterial = new MeshLambertMaterial({ color: 0xfbff00, transparent: true, opacity: opacity });
+            document.addEventListener("keydown", (ev: KeyboardEvent) => this.onKeyDown(ev));
+            document.addEventListener("keyup", (ev: KeyboardEvent) => this.onKeyUp(ev));
+
+            this.renderPlayer();
+            
+        } else {
+
+            // clear walls before rebuild
+            this.lines = [];
+            this.root.clear();
+
+        }
 
         this.renderWalls();
-        this.renderPlayer();
-
-        // let axe = new AxesHelper(100);
-        // this.scene.add(axe);
     }
 
     render(dt: number) {
+
+        let forward = 0;
+        let side = 0;
+        if (this.keydowns.up) forward = 1;
+        if (this.keydowns.down) forward = -1;
+        if (this.keydowns.left) side = 1;
+        if (this.keydowns.right) side = -1;
+        if (forward != 0) {
+            let direction = this.camera.getWorldDirection(a);
+            direction.multiplyScalar(forward * dt * 5);
+            this.camera.position.add(direction);
+            this.orbitControls.target.add(direction);
+        }
+        if (side != 0) {
+            let d = this.camera.getWorldDirection(a);
+            let up = b.set(0, 1, 0).transformDirection(this.camera.matrixWorld);
+            let length = c.copy(this.orbitControls.target).sub(this.camera.position).length();
+            d.applyAxisAngle(up, side * dt * 2);
+            d.multiplyScalar(length);
+
+            this.orbitControls.target.copy(this.camera.position).add(d);
+            this.orbitControls.update();
+        }
 
         this.renderer.render(this.scene, this.camera);
     }
@@ -95,6 +131,9 @@ export class Map3dRenderer {
         this.renderer.setSize(w, h);
     }
 
+    switchTexturing() {
+        this.initialize(!this.useTexture);
+    }
 
     private renderWalls() {
 
@@ -124,7 +163,7 @@ export class Map3dRenderer {
             let wireGeometry = new BufferGeometry();
             wireGeometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
             let segments = new LineSegments(wireGeometry, new LineBasicMaterial({ color: 0x000000 }));
-            this.scene.add(segments);
+            this.root.add(segments);
         }
     }
 
@@ -132,7 +171,8 @@ export class Map3dRenderer {
         if (!this.useTexture) return this.defaultWallMaterial;
 
         let texture = this.processor.getTexture(wall.picnum);
-        let tex = texture.getTexture(wall.xrepeat, wall.yrepeat);
+        let tex = texture.getTexture(wall.xrepeat, wall.yrepeat, wall.xpanning, wall.ypanning, wall.stat.xflip, wall.stat.yflip);
+
         let material = new MeshBasicMaterial({ map: tex, transparent: true });
         return material;
     }
@@ -140,7 +180,7 @@ export class Map3dRenderer {
         if (!this.useTexture) return this.defaultCeilMaterial;
 
         let texture = this.processor.getTexture(sector.ceilingpicnum);
-        let tex = texture.getTexture(16, 16);
+        let tex = texture.getTexture(16, 16, sector.ceilingxpanning, sector.ceilingypanning, sector.cstat.xflip, sector.cstat.yflip);
         let material = new MeshBasicMaterial({ map: tex, transparent: true });
         return material;
     }
@@ -148,7 +188,7 @@ export class Map3dRenderer {
         if (!this.useTexture) return this.defaultFloorMaterial;
 
         let texture = this.processor.getTexture(sector.floorpicnum);
-        let tex = texture.getTexture(16, 16);
+        let tex = texture.getTexture(16, 16, sector.floorxpanning, sector.floorypanning, sector.fstat.xflip, sector.fstat.yflip);
         let material = new MeshBasicMaterial({ map: tex, transparent: true });
         return material;
     }
@@ -198,7 +238,9 @@ export class Map3dRenderer {
         let sector = this.map.sectors[this.map.currentSector];
 
         a.set(this.map.startX, sector.floorz + 1, this.map.startY);
-        b.set(0, 0.5, -5);
+
+        let angle = 270 - 360 * MathUtils.inverseLerp(0, 2048, this.map.startAngle);
+        b.set(0, 0, -5).applyAxisAngle(c.set(0, 1, 0), angle * MathUtils.DEG2RAD);
 
         this.camera.position.copy(a);
         this.orbitControls.target.copy(a).add(b);
@@ -265,7 +307,6 @@ export class Map3dRenderer {
             floorindex.setZ(i, b);
         }
 
-
         let floor = new Mesh(floorGeometry, this.getFloorMaterial(sector));
         let ceiling = new Mesh(ceilGeometry, this.getCeilingMaterial(sector));
 
@@ -294,10 +335,10 @@ export class Map3dRenderer {
         let dir1l = dir1.length();
         let dir1l2 = planey.copy(d).sub(c).length();
 
-        uvs.push(0, a.y);
-        uvs.push(0, (a.y + dir1l));
-        uvs.push(1, (a.y + dir1l2));
-        uvs.push(1, a.y);
+        uvs.push(0, 0);
+        uvs.push(0, (0 + dir1l));
+        uvs.push(1, (0 + dir1l2));
+        uvs.push(1, 0);
 
         normals.push(normal.x, normal.y, normal.z);
         normals.push(normal.x, normal.y, normal.z);
@@ -327,5 +368,19 @@ export class Map3dRenderer {
         let wall = this.map.walls[sector.wallptr];
         let v = (wall.x - x) * sector.grad[floor].x + (wall.y - y) * sector.grad[floor].y + sector.z[floor];
         return v;
+    }
+
+    private onKeyDown(e: KeyboardEvent) {
+        if (e.key == "ArrowUp") this.keydowns.up = true;
+        if (e.key == "ArrowDown") this.keydowns.down = true;
+        if (e.key == "ArrowLeft") this.keydowns.left = true;
+        if (e.key == "ArrowRight") this.keydowns.right = true;
+    }
+
+    private onKeyUp(e: KeyboardEvent) {
+        if (e.key == "ArrowUp") this.keydowns.up = false;
+        if (e.key == "ArrowDown") this.keydowns.down = false;
+        if (e.key == "ArrowLeft") this.keydowns.left = false;
+        if (e.key == "ArrowRight") this.keydowns.right = false;
     }
 }

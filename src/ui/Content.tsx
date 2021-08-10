@@ -9,7 +9,8 @@ import { FileVoc } from "../data/FileVoc";
 import { GrpProcessor } from "../data/GrpProcessor";
 import { MapRenderer } from "../maprenderer/MapRenderer";
 import { Component } from "./Component";
-import { renderArt, renderB800, renderMap, renderMid, renderVoc } from "./DataRenderer";
+import { renderArt, renderB800, renderMid, renderVoc } from "./DataRenderer";
+import { MapViewControls } from "./MapViewControls";
 
 export class Content extends Component<HTMLDivElement> {
 
@@ -63,9 +64,17 @@ export class Content extends Component<HTMLDivElement> {
         } else if (file instanceof FileMap) {
             filetype = "map";
             file.loadFull();
-            view = renderMap(file);
-
             this.mapRenderer = new MapRenderer();
+            let mapControls = new MapViewControls(file, this.mapRenderer, processor);
+            mapControls.render();
+            view = mapControls.element;
+            let e = <div className={"content " + filetype}>
+                {view}
+            </div>
+            this.replaceElement(e);
+            mapControls.initialize();
+            return;
+
         } else if (file instanceof FileArt) {
             filetype = "art";
             view = <div>

@@ -1,4 +1,5 @@
 import { Map } from "../../data/FileMap";
+import { GrpProcessor } from "../../data/GrpProcessor";
 
 export class Point2 {
     constructor(public x = 0, public y = 0, public z = 0) { }
@@ -13,8 +14,6 @@ export class Point2 {
 
 export class Map2dRenderer {
 
-    private canvas: HTMLCanvasElement;
-    private map: Map;
     private context: CanvasRenderingContext2D;
 
     private boundsMin: Point2;
@@ -23,13 +22,16 @@ export class Map2dRenderer {
     private lineWidth = 1;
     private scale = 1;
     private position = new Point2();
+    private initialized = false;
 
-    initialize(canvas: HTMLCanvasElement, map: Map) {
-        this.canvas = canvas;
-        this.map = map;
+    constructor(private canvas: HTMLCanvasElement,private map: Map,private processor: GrpProcessor) {
+    }
 
+    initialize() {
+        if(this.initialized) return;
 
-        this.context = canvas.getContext("2d");
+        this.initialized=true;
+        this.context = this.canvas.getContext("2d");
 
 
         this.boundsMin = new Point2(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
@@ -93,7 +95,7 @@ export class Map2dRenderer {
         this.context.fillStyle = "#e800c1";
         this.context.beginPath();
         // this.context.arc(this.position.x, this.position.y, 500, 0, 2 * Math.PI);
-        this.context.arc(this.map.startX, this.map.startY, 500, 0, 2 * Math.PI);
+        this.context.arc(this.map.startX, this.map.startY, 1, 0, 2 * Math.PI);
         this.context.fill();
     }
 

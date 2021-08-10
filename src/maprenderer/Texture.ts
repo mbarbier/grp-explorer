@@ -9,7 +9,7 @@ export class Texture {
     }
 
 
-    getTexture(xrepeat: number, yrepeat: number) {
+    getTexture(xrepeat: number, yrepeat: number, xpanning = 0, ypanning = 0, xflip = false, yflip = false) {
 
         if (this.texture == null) {
             let pixels = new Uint8ClampedArray(this.tile.pixels.length * 4);
@@ -32,8 +32,8 @@ export class Texture {
 
         let max = Math.max(this.tile.x, this.tile.y);
         let tex = this.texture.clone();
-        let repeatx = xrepeat;
-        let repeaty = yrepeat;
+        let repeatx = xrepeat * (xflip ? -1 : +1);
+        let repeaty = yrepeat * (yflip ? +1 : -1);
         tex.repeat.set(8 * repeatx / max, 8 * repeaty / max);
         tex.needsUpdate = true;
 
