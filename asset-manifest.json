@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/grp-explorer/static/css/main.030f34d7.chunk.css",
+    "main.js": "/grp-explorer/static/js/main.70974089.chunk.js",
+    "main.js.map": "/grp-explorer/static/js/main.70974089.chunk.js.map",
+    "runtime-main.js": "/grp-explorer/static/js/runtime-main.2902e5c1.js",
+    "runtime-main.js.map": "/grp-explorer/static/js/runtime-main.2902e5c1.js.map",
+    "static/js/2.35bb1930.chunk.js": "/grp-explorer/static/js/2.35bb1930.chunk.js",
+    "static/js/2.35bb1930.chunk.js.map": "/grp-explorer/static/js/2.35bb1930.chunk.js.map",
+    "static/js/3.0183e3cf.chunk.js": "/grp-explorer/static/js/3.0183e3cf.chunk.js",
+    "static/js/3.0183e3cf.chunk.js.map": "/grp-explorer/static/js/3.0183e3cf.chunk.js.map",
+    "index.html": "/grp-explorer/index.html",
+    "static/css/main.030f34d7.chunk.css.map": "/grp-explorer/static/css/main.030f34d7.chunk.css.map",
+    "static/js/2.35bb1930.chunk.js.LICENSE.txt": "/grp-explorer/static/js/2.35bb1930.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.2902e5c1.js",
+    "static/js/2.35bb1930.chunk.js",
+    "static/css/main.030f34d7.chunk.css",
+    "static/js/main.70974089.chunk.js"
+  ]
+}
