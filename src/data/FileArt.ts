@@ -1,4 +1,5 @@
 import { FileBase } from "./FileBase";
+import { Tile } from "./Types";
 
 export class FileArt extends FileBase {
 
@@ -8,7 +9,7 @@ export class FileArt extends FileBase {
         this.reader.offset = this.initialOffset;
 
         let version = this.reader.readUint32LE();
-        if (version != 1) {
+        if (version !== 1) {
             throw new Error("expecting version 1 for art files");
         }
 

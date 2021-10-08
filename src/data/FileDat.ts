@@ -1,4 +1,5 @@
 import { FileBase } from "./FileBase";
+import { Color } from "./Types";
 
 export class FileDat extends FileBase {
 
@@ -8,8 +9,8 @@ export class FileDat extends FileBase {
     read() {
         this.reader.offset = this.initialOffset;
 
-        if (this.name == "lookup.dat") this.readLookup();
-        else if (this.name == "palette.dat") this.readPalette();
+        if (this.name === "lookup.dat") this.readLookup();
+        else if (this.name === "palette.dat") this.readPalette();
     }
 
     private readPalette() {
@@ -19,7 +20,7 @@ export class FileDat extends FileBase {
             let b = this.reader.readUint8() * 4;
 
             let color = { r: r, g: g, b: b, a: 255 };
-            if (c == 255) color.a = 0;
+            if (c === 255) color.a = 0;
             this.palette.push(color);
         }
 

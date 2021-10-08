@@ -6,7 +6,7 @@ export class FileB800 extends FileBase {
     colors: Array<number> = [];
 
     read() {
-        if (this.size != 4000) {
+        if (this.size !== 4000) {
             console.log(this.name + " doesn't seems to be a valid b800 file.");
             return;
         }

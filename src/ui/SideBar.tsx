@@ -1,69 +1,78 @@
-import { App } from "../App";
+import { useState } from "react";
+import { LoadingState, useFileContext, useLoadingContext } from "../Contexts";
 import { FileBase } from "../data/FileBase";
-import { GrpProcessor } from "../data/GrpProcessor";
-import { Component } from "./Component";
+import { getGrpProcessor } from "../Services";
 
-export class SideBar extends Component<HTMLDivElement> {
 
-    constructor(public app: App) {
-        super();
+type SectionProps = {
+    ext: string,
+}
+const Section = ({ ext }: SectionProps) => {
+
+    const [isOpen, setIsOpen] = useState(false);
+    const { setFile } = useFileContext();
+
+    let processor = getGrpProcessor();
+    let files = processor.getFiles(ext);
+
+    function onFileSelected(file: FileBase) {
+        setFile({
+            name: file.name,
+            ext: ext
+        });
     }
 
-    build() {
+    function toggle() {
+        setIsOpen(!isOpen);
+    }
+
+    return <div className="section">
+        <div className="sectionHeader" onClick={() => toggle()}>{ext} ({files.length})</div>
+        <div className={isOpen ? "open" : "close"}>
+            {files.map((f, i) => {
+                return <div key={i} className="file" onClick={() => onFileSelected(f)}>
+                    {f.name}
+                </div>
+            })}
+        </div>
+    </div>
+}
+
+
+
+export function Sidebar() {
+
+    const { loadingState } = useLoadingContext()!;
+
+    function renderEmpty() {
+        return <div className="sidebar">
+        </div>
+    }
+    function renderLoading() {
         return <div className="sidebar">
             Loading files..
         </div>
     }
 
-    refresh(processor: GrpProcessor) {
-        let e: HTMLDivElement = <div className="sidebar">
-            {this.getSection(processor, "art")}
-            {this.getSection(processor, "bin")}
-            {this.getSection(processor, "con")}
-            {this.getSection(processor, "map")}
-            {this.getSection(processor, "dat")}
-            {this.getSection(processor, "mid")}
-            {this.getSection(processor, "voc")}
-        </div>
+    function renderLoaded() {
+        console.log("RENDER LOADED");
 
-        let sections = e.getElementsByClassName("section");
-        for (let i = 0; i < sections.length; i++) {
-            this.addSectionToggler(sections.item(i) as HTMLElement);
-        }
-
-        this.replaceElement(e);
-    }
-
-    private getSection(processor: GrpProcessor, ext: string) {
-        let files = processor.getFiles(ext);
-
-        return <div className="section">
-            <div className="sectionHeader">{ext} ({files.length})</div>
-            <div className="close">
-                {files.map((f, i) => {
-                    return <div className="file" onclick={() => this.onFileSelected(f, processor)}>
-                        {f.name}
-                    </div>
-                })}
-            </div>
+        return <div className="sidebar">
+            <Section ext="art" />
+            <Section ext="bin" />
+            <Section ext="con" />
+            <Section ext="map" />
+            <Section ext="dat" />
+            <Section ext="mid" />
+            <Section ext="voc" />
         </div>
     }
 
-    private addSectionToggler(section: HTMLElement) {
-        let header = section.children.item(0) as HTMLElement;
-        header.addEventListener("click", (e) => {
-            let child = section.children.item(1) as HTMLElement;
-            if (child.classList.contains("open")) {
-                child.classList.remove("open");
-                child.classList.add("close");
-            } else {
-                child.classList.add("open");
-                child.classList.remove("close");
-            }
-        });
-    }
-
-    private onFileSelected(file: FileBase, processor: GrpProcessor) {
-        this.app.content.display(file, processor);
+    if (loadingState === LoadingState.Loaded) {
+        return renderLoaded();
+    } else if (loadingState === LoadingState.Loading) {
+        return renderLoading();
+    } else {
+        return renderEmpty();
     }
 }

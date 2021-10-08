@@ -33,7 +33,6 @@ export class MapRenderer {
         this.canvas.push(canvas3d);
         this.canvas.push(canvas2d);
 
-        let size = content.getBoundingClientRect();
         this.onresize();
 
         this.resizeObserver = new ResizeObserver((entries) => {

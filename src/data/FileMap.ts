@@ -19,7 +19,7 @@ export class FileMap extends FileBase {
         let r = new BufferReader(this.rawData)
 
         let v = r.readUint32LE(); // version
-        if (v != 7) {
+        if (v !== 7) {
             throw new Error("expecting map version to be 7");
         }
 
@@ -136,8 +136,8 @@ export class FileMap extends FileBase {
             let wall1 = this.map.walls[wall0.point2];
 
             for (let f = 0; f < 2; f++) {
-                let slopped = (f == 0 ? sector.cstat.sloped : sector.fstat.sloped);
-                let angle = (f == 0 ? sector.ceilingheinum : sector.floorheinum)
+                let slopped = (f === 0 ? sector.cstat.sloped : sector.fstat.sloped);
+                let angle = (f === 0 ? sector.ceilingheinum : sector.floorheinum)
                 if (slopped) {
                     angle /= 4096;
                     let fx = wall1.y - wall0.y;
@@ -166,7 +166,7 @@ function readType(t: Wstat | Secstat, value: number) {
         let v = (value >> i);
         v = v & 1;
         let key = keys[i];
-        (t as any)[key] = (v == 0 ? false : true);
+        (t as any)[key] = (v === 0 ? false : true);
     }
 }
 

@@ -1,70 +1,75 @@
-import { App } from "../App";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { useFileContext } from "../Contexts";
 import { FileMap } from "../data/FileMap";
-import { GrpProcessor } from "../data/GrpProcessor";
+import { FileMid } from "../data/FileMid";
 import { MapRenderer } from "../maprenderer/MapRenderer";
-import { Component } from "./Component";
-import { getDownloadButon } from "./DataRenderer";
-import { RefObject } from "./TrueJsx";
+import { getGrpProcessor } from "../Services";
+import { DownloadButton } from "./DataRenderer";
 
 
+export function MapViewControls() {
 
-export class MapViewControls extends Component<HTMLDivElement> {
+    let { file } = useFileContext();
 
-    private link2d3d: RefObject<HTMLElement>;
-    private linkTexturing: RefObject<HTMLElement>;
-    private is2dActive = false;
-    private isTextureActive = false;
+    let processor = getGrpProcessor();
+    let fileMap = processor.getFile(file.name) as FileMap;
 
-    constructor(private fileMap: FileMap, private mapRenderer: MapRenderer, private processor: GrpProcessor) {
-        super();
+    const rootRef = useRef<HTMLDivElement>()
+    const link2d3d = useRef<HTMLDivElement>()
+    const linkTexturing = useRef<HTMLDivElement>()
+    let is2dActive = false;
+    let isTextureActive = false;
+    let mapRenderer: MapRenderer;
 
+    function switch2d3d() {
+        is2dActive = !is2dActive;
+        let content = is2dActive ? "[3D view]" : "[2D view]";
+        link2d3d.current.innerText = content;
+        linkTexturing.current.style.display = (is2dActive ? "none" : "block");
+        mapRenderer.switch2d3d();
     }
 
-    protected build(): HTMLDivElement {
-        this.link2d3d = RefObject.new();
-        this.linkTexturing = RefObject.new();
+    function switchTexturing() {
+        mapRenderer.switchTexturing();
 
-        return <div>
+        isTextureActive = !isTextureActive;
+        let content = isTextureActive ? "[Disable texture]" : "[Enable texture]";
+        linkTexturing.current.innerText = content;
+    }
+
+
+    useLayoutEffect(() => {
+        console.log("LOAD  MAP");
+        fileMap.loadFull();
+
+        mapRenderer = new MapRenderer();
+        mapRenderer.initialize(rootRef.current, fileMap.map, processor);
+
+        return function cleanup() {
+            console.log("CLEANUP MAP");
+            mapRenderer.destroy();
+        }
+    });
+
+    return <div ref={rootRef} className="content">
+        <div className="map">
             <div className="mapheader" >
                 <div className="title" >
-                    {this.fileMap.name}[{this.fileMap.size / 1000} kB]
+                    {fileMap.name}[{fileMap.size / 1000} kB]
                 </div>
                 <div>
-                    {getDownloadButon(this.fileMap.rawData, "file/map", this.fileMap.name)}
+                    <DownloadButton type="file/map" name={fileMap.name} data={fileMap.rawData} />
                 </div>
-                <div ref={this.linkTexturing} className="texturing" onclick={() => this.switchTexturing()}>
+                <div ref={linkTexturing} className="texturing" onClick={() => switchTexturing()}>
                     [Enable texture]
                 </div>
-                <div ref={this.link2d3d} className="view2d3d" onclick={() => this.switch2d3d()}>
+                <div ref={link2d3d} className="view2d3d" onClick={() => switch2d3d()}>
                     [2D view]
                 </div>
             </div>
             <canvas id="c3d"></canvas>
             <canvas id="c2d"></canvas>
         </div>
-    }
-
-    initialize() {
-        this.mapRenderer.initialize(this.element.parentElement, this.fileMap.map, this.processor);
-    }
-
-    private switch2d3d() {
-        this.is2dActive = !this.is2dActive;
-        let content = this.is2dActive ? "[3D view]" : "[2D view]";
-        this.link2d3d.get().innerText = content;
-
-        this.mapRenderer.switch2d3d();
-
-        this.linkTexturing.get().style.visibility = (this.is2dActive ? "hidden" : "visible");
-    }
-
-    private switchTexturing() {
-        this.mapRenderer.switchTexturing();
-
-        this.isTextureActive = !this.isTextureActive;
-        let content = this.isTextureActive ? "[Disable texture]" : "[Enable texture]";
-        this.linkTexturing.get().innerText = content;
-    }
-
+    </div>
 }
 

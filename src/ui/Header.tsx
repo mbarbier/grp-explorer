@@ -1,21 +1,33 @@
-import { App } from "../App";
-import { Component } from "./Component";
+import { LoadingState, useLoadingContext } from "../Contexts";
+import { initGrpProcessor } from "../Services";
 import { DropZone } from "./DropZone";
 
-export class Header extends Component<HTMLDivElement> {
+export function Header() {
 
-    private dropzone: DropZone;
+    const { loadingState, setLoadingState } = useLoadingContext()!;
 
-    constructor(public app: App) {
-        super();
+    function loadGrp() {
+        if (loadingState === LoadingState.Loading) return;
 
-        this.dropzone = new DropZone(app);
+        setLoadingState(LoadingState.Loading);
+
+        fetch(process.env.PUBLIC_URL + "/grp/demo.grp").then((response) => {
+            return response.arrayBuffer();
+        }).then((buffer) => {
+            console.log("demo grp loaded");
+            initGrpProcessor(buffer);
+        }).finally(() => {
+            setLoadingState(LoadingState.Loaded);
+        });
     }
 
-    build() {
-        return <div className="header">
-            {this.dropzone.element}
+    return <div className="header">
+        <DropZone></DropZone>
+
+        <div className="loadzone" onClick={() => loadGrp()}>
+            <div>
+                Or load the demo.grp by clicking here
+            </div>
         </div>
-    }
-
+    </div>
 }

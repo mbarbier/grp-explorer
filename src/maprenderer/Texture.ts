@@ -1,5 +1,6 @@
 import { FileDat } from "../data/FileDat";
 import { DataTexture, RepeatWrapping, RGBAFormat } from "three";
+import { Tile } from "../data/Types";
 
 export class Texture {
 

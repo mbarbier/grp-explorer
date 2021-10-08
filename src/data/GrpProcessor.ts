@@ -13,7 +13,7 @@ export class GrpProcessor {
 
     files: Array<FileBase> = [];
     palette: FileDat;
-
+    fileByName: Map<string, FileBase>;
 
     read(buffer: ArrayBuffer) {
         let length = buffer.byteLength;
@@ -22,10 +22,11 @@ export class GrpProcessor {
         let reader = new BufferReader(buffer);
         let sig = reader.readString(12);
 
-        if (sig != "KenSilverman") {
+        if (sig !== "KenSilverman") {
             throw new Error("Wrong grp signature. Found : " + sig);
         }
 
+        this.fileByName = new Map();
         let fileCount = reader.readUint32LE();
         let offset = reader.offset;
         offset += 16 * fileCount;
@@ -40,28 +41,28 @@ export class GrpProcessor {
             filename = filename.substr(0, idx + 4);
 
             let file: FileBase;
-            if (ext == "con") {
+            if (ext === "con") {
                 file = new FileCon(reader, filename, filesize, offset);
                 this.files.push(file);
-            } else if (ext == "bin") {
+            } else if (ext === "bin") {
                 file = new FileB800(reader, filename, filesize, offset);
                 this.files.push(file);
-            } else if (ext == "dat") {
+            } else if (ext === "dat") {
                 file = new FileDat(reader, filename, filesize, offset);
                 this.files.push(file);
-                if (filename == "palette.dat") {
+                if (filename === "palette.dat") {
                     this.palette = file as FileDat;
                 }
-            } else if (ext == "art") {
+            } else if (ext === "art") {
                 file = new FileArt(reader, filename, filesize, offset);
                 this.files.push(file);
-            } else if (ext == "voc") {
+            } else if (ext === "voc") {
                 file = new FileVoc(reader, filename, filesize, offset);
                 this.files.push(file);
-            } else if (ext == "mid") {
+            } else if (ext === "mid") {
                 file = new FileMid(reader, filename, filesize, offset);
                 this.files.push(file);
-            } else if (ext == "map") {
+            } else if (ext === "map") {
                 file = new FileMap(reader, filename, filesize, offset);
                 this.files.push(file);
             } else {
@@ -76,6 +77,7 @@ export class GrpProcessor {
         for (let f = 0; f < this.files.length; f++) {
             let file = this.files[f];
             file.read();
+            this.fileByName.set(file.name, file);
         }
 
         let idx = 0;
@@ -95,28 +97,33 @@ export class GrpProcessor {
         let file = new FileMap(reader, name, buffer.byteLength, 0);
         file.read();
         this.files.push(file);
+        this.fileByName.set(file.name, file);
     }
 
     getFiles(extension: string): Array<FileBase> {
         let found: Array<FileBase> = [];
         this.files.forEach(f => {
-            if (extension == "con" && f instanceof FileCon) {
+            if (extension === "con" && f instanceof FileCon) {
                 found.push(f);
-            } else if (extension == "bin" && f instanceof FileB800) {
+            } else if (extension === "bin" && f instanceof FileB800) {
                 found.push(f);
-            } else if (extension == "dat" && f instanceof FileDat) {
+            } else if (extension === "dat" && f instanceof FileDat) {
                 found.push(f);
-            } else if (extension == "art" && f instanceof FileArt) {
+            } else if (extension === "art" && f instanceof FileArt) {
                 found.push(f);
-            } else if (extension == "voc" && f instanceof FileVoc) {
+            } else if (extension === "voc" && f instanceof FileVoc) {
                 found.push(f);
-            } else if (extension == "mid" && f instanceof FileMid) {
+            } else if (extension === "mid" && f instanceof FileMid) {
                 found.push(f);
-            } else if (extension == "map" && f instanceof FileMap) {
+            } else if (extension === "map" && f instanceof FileMap) {
                 found.push(f);
             }
         });
         return found;
+    }
+
+    getFile(name: string) {
+        return this.fileByName.get(name);
     }
 
 

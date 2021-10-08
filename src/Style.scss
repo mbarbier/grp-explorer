@@ -1,0 +1,154 @@
+body {
+    font: 100% Helvetica, sans-serif;
+    color: #121212;
+    background-color: rgb(255, 255, 240);
+    margin: 0;
+}
+
+.app {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 200px auto;
+    grid-template-rows: 100px auto;
+    grid-template-areas: 
+        "header header"
+        "sidebar content";
+}
+
+.header {
+    grid-area: header;
+
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    
+    .dropzone {
+        margin: 10px;
+        width: 80%;
+    }
+    
+    .drop-area {
+        border: 2px dashed #4dd0e1;
+        border-radius: 20px;
+        &.highlight {
+            border-color: orange;
+        }
+    }
+    
+    .loadzone {
+        margin: 10px;
+        border: 2px dashed #4dd0e1;
+        border-radius: 20px;
+
+        display: flex;
+        align-items: center;
+        
+        &:hover {
+            cursor: pointer;
+            border-color: orange;
+        }
+
+        div {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    }
+}
+
+.sidebar {
+    grid-area: sidebar;
+    padding: 10px;
+
+    .section {
+        
+        .sectionHeader {
+            cursor: pointer;
+            font-weight: bold;
+
+            &:hover {
+                color: #4dd0e1;
+                text-decoration-line: underline overline;
+            }
+        }
+        
+        .file {
+            cursor: pointer;
+            margin-left: 10px;
+
+            &:hover {
+                color: #4dd0e1;
+                text-decoration-line: underline overline;
+            }
+        }
+
+        .open {
+            display: block;
+        }
+        .close {
+            display: none;
+        }
+    }
+}
+
+.content {
+    grid-area: content;
+}
+
+.error {
+    color: red;
+    font-weight: bold;
+}
+
+
+.content {
+
+    .B800 {
+
+        .line {
+            height: 18px;
+        }
+        span {
+            white-space: pre;
+            width: 12px;
+            height: 18px;
+            display: inline-block;
+            text-align: center;
+        }
+
+    }
+
+    a {
+        color: #121212;
+        &:hover {
+            color: orange;
+        }
+    }
+
+    .tile {
+        border: 1px solid #4dd0e1;
+    }
+
+    .map {
+        position: relative;
+        
+        .mapheader {
+            position: absolute;
+            z-index: 10;
+            background-color: rgba($color: (#ffffff), $alpha: 0.8);
+            display: flex;
+
+            div {
+                padding: 10px;
+            }
+        }
+    
+        canvas {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    }
+}
+

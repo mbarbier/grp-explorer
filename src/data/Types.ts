@@ -1,12 +1,12 @@
 
-type Color = {
+export type Color = {
     r: number,
     g: number,
     b: number,
     a: number,
 }
 
-type Tile = {
+export type Tile = {
     x: number,
     y: number,
     valid?: boolean,
