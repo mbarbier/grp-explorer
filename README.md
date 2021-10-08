@@ -6,4 +6,4 @@ Explorer for BUILD engine grp files (Duke Nukem 3d, Shadow warrior, etc)
 * map
 * scripts
 
-https://mbarbier.github.io/threejs-gpu-skinning/
+https://mbarbier.github.io/grp-explorer/
